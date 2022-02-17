@@ -9,7 +9,7 @@ using namespace std;
 Actor::Actor(int imageId, int startX, int startY, int startDirection, int depth, double size, StudentWorld* sWorld, bool isAlive)
 : GraphObject(imageId, startX, startY, startDirection, size, depth)
 {
-    m_alive = true;
+    m_alive = isAlive;
     m_world = sWorld;
 }
 
