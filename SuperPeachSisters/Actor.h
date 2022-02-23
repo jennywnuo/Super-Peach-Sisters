@@ -59,12 +59,14 @@ public:
     virtual void bonk();
     void setHealth(int h);
     void setShoot(bool s); // to the rain
-    void setInvinc(bool i);
+    void setStar(bool s);
+    void setJumps(bool j);
     
 private:
     int m_distance;
-    bool m_invinc;
+    bool m_starpower;
     bool m_shootpower;
+    bool m_jumps;
     int m_health;
     int m_recharge;
     

@@ -23,7 +23,8 @@ public:
     bool overlapPeach(int x, int y);
     void changePeachHealth(int h);
     void peachShoot(bool s);
-    void peachJump(bool j); 
+    void peachJump(bool j);
+    void peachStar(bool s); 
     
 
 private:

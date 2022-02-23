@@ -174,7 +174,12 @@ void StudentWorld::peachShoot(bool s)
     m_peach->setShoot(s);
 }
 
-//void StudentWorld::peachJump(bool j)
-//{
-//    m_peach->
-//}
+void StudentWorld::peachJump(bool j)
+{
+    m_peach->setJumps(j);
+}
+
+void StudentWorld::peachStar(bool s)
+{
+    m_peach->setStar(s);
+}

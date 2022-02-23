@@ -52,7 +52,8 @@ Peach::Peach(int imageId, int startX, int startY, StudentWorld* sWorld) : Actor(
 {
     m_distance = 0;
     m_shootpower = false;
-    m_invinc = false;
+    m_starpower = false;
+    m_jumps = false;
     m_recharge = 0;
 }
 
@@ -107,7 +108,10 @@ void Peach::doSomething()
             if(getWorld()->overlapped(currX, currY - 2, false))
             {
                 getWorld()->playSound(SOUND_PLAYER_JUMP);
-                m_distance = 8;
+                if (!m_jumps)
+                    m_distance = 8;
+                else
+                    m_distance = 12;
             }
         }
 
@@ -140,9 +144,14 @@ void Peach::setShoot(bool s)
     m_shootpower = s;
 }
 
-void Peach::setInvinc(bool i)
+void Peach::setStar(bool s)
 {
-    m_invinc = i;
+    m_starpower = s;
+}
+
+void Peach::setJumps(bool j)
+{
+    m_jumps = j;
 }
 
 // BLOCK 🧱
@@ -284,11 +293,10 @@ Mushroom::Mushroom(int imageID, int startX, int startY, StudentWorld* sWorld) : 
 
 void Mushroom::changes(){
     getWorld()->increaseScore(75);
-//    getWorld()->changeHops(true);
+    getWorld()->peachJump(true);
     getWorld()->changePeachHealth(2);
     getWorld()->playSound(SOUND_PLAYER_POWERUP);
 }
-
 
 // STARS ⭐️
 Star::Star(int imageID, int startX, int startY, StudentWorld* sWorld) : Goodie(IID_STAR, startX, startY, 0, 1, 1, sWorld, false)
@@ -297,8 +305,7 @@ Star::Star(int imageID, int startX, int startY, StudentWorld* sWorld) : Goodie(I
 
 void Star::changes(){
     getWorld()->increaseScore(100);
-//    getWorld()->changeHops(true);
-//    getWorld()->changePeachHitpoints(2);
+    getWorld()->peachStar(true); 
     getWorld()->playSound(SOUND_PLAYER_POWERUP);
 }
 
@@ -341,8 +348,6 @@ void PeachFireball::doSomething()
         moveTo(currX, currY - 2);
         cout << "GWHGHSGHSGFGHGH " << endl;
     }
-
-    
     
 }
 
