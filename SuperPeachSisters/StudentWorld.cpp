@@ -3,6 +3,8 @@
 #include "Level.h"
 #include <vector>
 #include <string>
+#include <sstream>
+
 using namespace std;
 
 GameWorld* createStudentWorld(string assetPath)
@@ -15,7 +17,7 @@ GameWorld* createStudentWorld(string assetPath)
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
-    std::vector<Actor> m_actors;
+    m_numActors = 0;
 }
 
 StudentWorld::~StudentWorld()
@@ -36,7 +38,6 @@ int StudentWorld::init()
     {
         cerr << "Successfully loaded level" << endl;
         Level::GridEntry ge;
-        // x=5, y=10
         for(int i = 0; i < 32; i++)
         {
             for(int j = 0; j < 32; j++)
@@ -45,40 +46,36 @@ int StudentWorld::init()
                 switch (ge)
                 {
                     case Level::empty:
-                        cout << "lol" << endl;
                         break;
                     case Level::koopa:
-                        cout << "lol" << endl;
                         break;
                     case Level::goomba:
-                        cout << "lol" << endl;
+                        addActor(new Goomba(IID_GOOMBA, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this));
                         break;
                     case Level::peach:
-                        m_peach = new Peach(IID_PEACH, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, 0 , 1 , 0, this);
+                        m_peach = new Peach(IID_PEACH, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this);
                         break;
                     case Level::flag:
-                        cout << "lol" << endl;
+                        addActor(new Flag(IID_FLAG, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this));
                         break;
                     case Level::block:
-                        m_actors.push_back(new Block(IID_BLOCK, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, 0, 1, 2, this));
+                        addActor(new Block(IID_BLOCK, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this, true, false));
                         break;
                     case Level::star_goodie_block:
-                        cout << "lol" << endl;
-                        break;
-                    case Level::piranha:
-                        cout << "lol" << endl;
+                        addActor(new StarBlock(IID_BLOCK, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this, true));
                         break;
                     case Level::mushroom_goodie_block:
-                        cout << "lol" << endl;
+                        addActor(new MushroomBlock(IID_BLOCK, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this, true));
                         break;
                     case Level::flower_goodie_block:
-                        cout << "lol" << endl;
+                        addActor(new FlowerBlock(IID_BLOCK, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this, true));
                         break;
                     case Level::pipe:
-                        cout << "lol" << endl;
+                        addActor(new Block(IID_PIPE, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this, true, false));
+                        break;
+                    case Level::piranha:
                         break;
                     case Level::mario:
-                        cout << "lol";
                         break;
                 }
             }
@@ -90,10 +87,7 @@ int StudentWorld::init()
 
 int StudentWorld::move()
 {
-    // This code is here merely to allow the game to build, run, and terminate after you hit enter.
-    // Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
     m_peach->doSomething();
-    
     vector<Actor*>::iterator it;
     it = m_actors.begin();
     while (it != m_actors.end())
@@ -101,9 +95,27 @@ int StudentWorld::move()
         (*it)->doSomething();
         it++;
     }
-
-    decLives();
-    return GWSTATUS_CONTINUE_GAME; // GWSTATUS_PLAYER_DIED
+    
+    m_peach->doSomething();
+    for (auto itr = m_actors.begin(); itr != m_actors.end(); itr++)
+    {
+        if (!(*itr)->isAlive())
+        {
+            delete *itr;
+            m_actors.erase(itr);
+            itr = m_actors.begin();
+        }
+    }
+    
+    ostringstream oss;
+    oss.setf(ios::fixed);
+    oss.precision(0);
+    oss << "Lives: " << getLives() << "  ";
+    oss << "Score: " << getScore() << "  ";
+    oss << "Level: " << getLevel() << "  ";
+    
+    setGameStatText(oss.str());
+    return GWSTATUS_CONTINUE_GAME;
 }
 
 void StudentWorld::cleanUp()
@@ -120,33 +132,32 @@ void StudentWorld::cleanUp()
     }
 }
 
-bool StudentWorld::overlappedLeft(int x, int y)
+void StudentWorld::addActor(Actor* a)
 {
-    vector<Actor*>::iterator it;
-    it = m_actors.begin();
-    while (it != m_actors.end())
+    m_actors.push_back(a);
+    m_numActors++; 
+}
+
+
+bool StudentWorld::overlapped(int x, int y, bool checkBonk)
+{
+    for(Actor* a:m_actors)
     {
-        if((*it)->getX() + SPRITE_WIDTH + SPRITE_WIDTH - 1 == x && (*it)->getY() + SPRITE_HEIGHT - 1 == y)
+        if(a->getX() < x + SPRITE_WIDTH - 1 && x < a->getX() + SPRITE_WIDTH - 1 && a->getY() < y + SPRITE_HEIGHT - 1 && y < a->getY() + SPRITE_HEIGHT - 1)
         {
-            return true;
+            if (checkBonk)
+                a->bonk();
+            if(a->isSolid())
+                return true;
         }
-        it++;
     }
     return false;
 }
 
-bool StudentWorld::overlappedRight(int x, int y)
-{
-    vector<Actor*>::iterator it;
-    it = m_actors.begin();
-    while (it != m_actors.end())
-    {
-        if((*it)->getX() + SPRITE_WIDTH - 1 == x + SPRITE_WIDTH && (*it)->getY() + SPRITE_HEIGHT - 1 == y)
-        {
-            return true;
-        }
-        it++;
+bool StudentWorld::overlapPeach(int x, int y) {
+    if (m_peach->getX()< x+SPRITE_WIDTH-1 && x < m_peach->getX() + SPRITE_WIDTH - 1 && m_peach->getY()<y+SPRITE_HEIGHT-1 && y < m_peach->getY()+SPRITE_HEIGHT-1) {
+        cout <<"lkmfaooo" << endl;
+        return true;
     }
     return false;
-    
 }

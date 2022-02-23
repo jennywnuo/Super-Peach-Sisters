@@ -17,14 +17,15 @@ public:
     virtual int init();
     virtual int move();
     virtual void cleanUp();
-    bool overlappedLeft(int x, int y);
-    bool overlappedRight(int x, int y); 
-    
+    void addActor(Actor* a); 
+    bool overlapped(int x, int y, bool checkBonk);
     Peach* getPeach() const;
+    bool overlapPeach(int x, int y); 
 
 private:
     Peach* m_peach;
     std::vector<Actor*> m_actors;
+    int m_numActors; 
 };
 
 #endif // STUDENTWORLD_H_
