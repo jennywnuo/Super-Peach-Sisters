@@ -56,7 +56,7 @@ int StudentWorld::init()
                         m_peach = new Peach(IID_PEACH, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this);
                         break;
                     case Level::flag:
-                        addActor(new Flag(IID_FLAG, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this));
+                        addActor(new Goal(IID_FLAG, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this));
                         break;
                     case Level::block:
                         addActor(new Block(IID_BLOCK, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this, true, false));
@@ -143,7 +143,7 @@ bool StudentWorld::overlapped(int x, int y, bool checkBonk)
 {
     for(Actor* a:m_actors)
     {
-        if(a->getX() < x + SPRITE_WIDTH - 1 && x < a->getX() + SPRITE_WIDTH - 1 && a->getY() < y + SPRITE_HEIGHT - 1 && y < a->getY() + SPRITE_HEIGHT - 1)
+        if(a->getX() < x + SPRITE_WIDTH  && x < a->getX() + SPRITE_WIDTH  && a->getY() < y + SPRITE_HEIGHT  && y < a->getY() + SPRITE_HEIGHT )
         {
             if (checkBonk)
                 a->bonk();
@@ -154,10 +154,27 @@ bool StudentWorld::overlapped(int x, int y, bool checkBonk)
     return false;
 }
 
-bool StudentWorld::overlapPeach(int x, int y) {
-    if (m_peach->getX()< x+SPRITE_WIDTH-1 && x < m_peach->getX() + SPRITE_WIDTH - 1 && m_peach->getY()<y+SPRITE_HEIGHT-1 && y < m_peach->getY()+SPRITE_HEIGHT-1) {
+bool StudentWorld::overlapPeach(int x, int y)
+{
+    if (m_peach->getX()< x+SPRITE_WIDTH-1 && x < m_peach->getX() + SPRITE_WIDTH - 1 && m_peach->getY()<y+SPRITE_HEIGHT-1 && y < m_peach->getY()+SPRITE_HEIGHT-1)
+    {
         cout <<"lkmfaooo" << endl;
         return true;
     }
     return false;
 }
+
+void StudentWorld::changePeachHealth(int h)
+{
+    m_peach->setHealth(h);
+}
+
+void StudentWorld::peachShoot(bool s)
+{
+    m_peach->setShoot(s);
+}
+
+//void StudentWorld::peachJump(bool j)
+//{
+//    m_peach->
+//}

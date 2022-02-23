@@ -20,7 +20,11 @@ public:
     void addActor(Actor* a); 
     bool overlapped(int x, int y, bool checkBonk);
     Peach* getPeach() const;
-    bool overlapPeach(int x, int y); 
+    bool overlapPeach(int x, int y);
+    void changePeachHealth(int h);
+    void peachShoot(bool s);
+    void peachJump(bool j); 
+    
 
 private:
     Peach* m_peach;

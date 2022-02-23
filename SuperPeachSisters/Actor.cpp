@@ -45,14 +45,14 @@ int Actor::getScore() const
 
 void Actor::bonk()
 {
-    
 }
 
 // PEACH 🍑
 Peach::Peach(int imageId, int startX, int startY, StudentWorld* sWorld) : Actor(imageId, startX, startY, 0, 1, 0, sWorld, true, false)
 {
     m_distance = 0;
-    m_firepower = true;
+    m_shootpower = false;
+    m_invinc = false;
     m_recharge = 0;
 }
 
@@ -62,31 +62,28 @@ void Peach::doSomething()
     if (!isAlive())
         return;
     
-    bool isJumping = m_distance > 0;
     int currX = getX();
     int currY = getY();
     
-    if(isJumping)
+    if(m_distance > 0)
     {
         if (!getWorld()->overlapped(getX(), getY() + 4, true))
-            moveTo(currX, currY + 4);
-        else
-            m_distance = 0;
-        m_distance--;
-    }
-    else
-    {
-        bool movable = true;
-        for (int i = 0; i <= 3; i++)
         {
-            if ((getWorld()->overlapped(currX, currY - i, false)))
-                movable = false;
+            moveTo(getX(), getY() + 4);
+            cout << m_distance << endl;
+            m_distance--;
         }
-        if (movable)
-            moveTo(currX, currY - 4);
+        else
+        {
+            m_distance = 0;
+        }
     }
+    else if (!getWorld()->overlapped(currX, currY-1, true) && !getWorld()->overlapped(currX, currY-2, true) && !getWorld()->overlapped(currX, currY-3, true) && !getWorld()->overlapped(currX, currY-4, true))
+        moveTo(currX, currY - 4);
+    
 
-    m_recharge--;
+    if (m_recharge > 0)
+        m_recharge--;
     
     int ch;
     if (getWorld()->getKey(ch))
@@ -110,14 +107,13 @@ void Peach::doSomething()
             if(getWorld()->overlapped(currX, currY - 2, false))
             {
                 getWorld()->playSound(SOUND_PLAYER_JUMP);
-                isJumping = true;
                 m_distance = 8;
             }
         }
-        
+
         if( ch == KEY_PRESS_SPACE)
         {
-            if (m_firepower && m_recharge <= 0)
+            if (m_shootpower && m_recharge <= 0)
             {
                 getWorld()->playSound(SOUND_PLAYER_FIRE);
                 m_recharge = 8;
@@ -139,9 +135,9 @@ void Peach::setHealth(int h)
     m_health = h;
 }
 
-void Peach::setFire(bool f)
+void Peach::setShoot(bool s)
 {
-    m_firepower = f;
+    m_shootpower = s;
 }
 
 void Peach::setInvinc(bool i)
@@ -164,7 +160,6 @@ void Block::bonk()
 {
     if (hasGoodie())
     {
-        cout << "theres a goodie here" << endl;
         bringGoodie();
     }
     setGoodie(false);
@@ -211,16 +206,15 @@ FlowerBlock::FlowerBlock(int imageID, int startX, int startY, StudentWorld* sWor
 
 void FlowerBlock::bringGoodie()
 {
-    cout << "flower" << endl; 
     getWorld()->addActor(new Flower(IID_FLOWER, getX(), getY()+8, getWorld()));
 }
 
-// FLAGS 🚩
-Flag::Flag(int imageID, int startX, int startY, StudentWorld*  sWorld): Actor(imageID, startX, startY, 0, 1, 1, sWorld, true, false){
+// GOAL 🚩
+Goal::Goal(int imageID, int startX, int startY, StudentWorld*  sWorld): Actor(imageID, startX, startY, 0, 1, 1, sWorld, true, false){
     
 }
 
-void Flag::doSomething()
+void Goal::doSomething()
 {
     if (!isAlive())
         return;
@@ -231,30 +225,19 @@ void Flag::doSomething()
     }
 }
 
-void Flag::bonk(){
+void Goal::bonk(){
     cout << "bonk!" << endl;
 }
 
 
-// MARIO 👨🏻
-Mario::Mario(int imageID, int startX, int startY, int dir, int depth, double size, StudentWorld* sWorld) : Actor(imageID, startX, startY, dir, depth, size, sWorld, true, true)
-{
-}
-
-void Mario::doSomething()
-{
-}
-
-void Mario::bonk()
-{
-}
 // GOODIES 😛
-Goodie::Goodie(int imageID, int startX, int startY, int startDirection, int depth, double size, StudentWorld* sWorld, bool isSolid) : Actor(imageID, startX, startY, 0, 1, 1, sWorld, true, true)
+Goodie::Goodie(int imageID, int startX, int startY, int startDirection, int depth, double size, StudentWorld* sWorld, bool isSolid) : Actor(imageID, startX, startY, 0, 1, 1, sWorld, true, false)
 {
 }
 
 void Goodie::doSomething()
 {
+    
     if (!isAlive())
         return;
     
@@ -264,14 +247,22 @@ void Goodie::doSomething()
     if (getWorld()->overlapPeach(currX, currY))
     {
         kill();
+        changes();
         return;
     }
     
+    int dir = 2;
+    if(getDirection() == 180)
+        dir = -2;
     
-    
-
+    if (!getWorld()->overlapped(getX(), getY() - 2, false))
+        moveTo(getX(), getY() - 2);
+            
+    if(!getWorld()->overlapped(getX() + dir, getY(), false))
+        moveTo(getX() + dir, getY());
+    else
+        setDirection(dir == 2 ? 180 : 0);
 }
-
 
 
 // FLOWERS 🌼
@@ -281,8 +272,8 @@ Flower::Flower(int imageID, int startX, int startY, StudentWorld* sWorld) : Good
 
 void Flower::changes(){
     getWorld()->increaseScore(50);
-//    getWorld()->changeHops(true);
-//    getWorld()->changePeachHitpoints(2);
+    getWorld()->peachShoot(true);
+    getWorld()->changePeachHealth(2);
     getWorld()->playSound(SOUND_PLAYER_POWERUP);
 }
 
@@ -294,7 +285,7 @@ Mushroom::Mushroom(int imageID, int startX, int startY, StudentWorld* sWorld) : 
 void Mushroom::changes(){
     getWorld()->increaseScore(75);
 //    getWorld()->changeHops(true);
-//    getWorld()->changePeachHitpoints(2);
+    getWorld()->changePeachHealth(2);
     getWorld()->playSound(SOUND_PLAYER_POWERUP);
 }
 

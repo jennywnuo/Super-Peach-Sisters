@@ -22,6 +22,7 @@ GraphObject
             Flowers
             Mushrooms
             Stars
+        Goal
 
 */
 
@@ -57,14 +58,13 @@ public:
     virtual void doSomething();
     virtual void bonk();
     void setHealth(int h);
-    void setFire(bool f); // to the rain
+    void setShoot(bool s); // to the rain
     void setInvinc(bool i);
-    
     
 private:
     int m_distance;
     bool m_invinc;
-    bool m_firepower;
+    bool m_shootpower;
     int m_health;
     int m_recharge;
     
@@ -110,23 +110,15 @@ public:
     void bringGoodie();
 };
 
-// FLAGS 🚩
-class Flag: public Actor
+// GOAL 🚩
+class Goal: public Actor
 {
 public:
-    Flag(int imageID, int startX, int startY, StudentWorld* sWorld);
+    Goal(int imageID, int startX, int startY, StudentWorld* sWorld);
     virtual void doSomething();
     virtual void bonk();
 };
 
-// MARIO 👨🏻
-class Mario: public Actor
-{
-public:
-    Mario(int imageID, int startX, int startY, int dir, int depth, double size, StudentWorld* sWorld);
-    virtual void doSomething();
-    virtual void bonk();
-};
 
 // GOODIES 😛
 class Goodie: public Actor
