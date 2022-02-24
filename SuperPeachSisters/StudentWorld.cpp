@@ -131,10 +131,28 @@ void StudentWorld::cleanUp()
     }
 }
 
+Peach* StudentWorld::getPeach() const
+{
+    return m_peach;
+}
+
 void StudentWorld::addActor(Actor* a)
 {
     m_actors.push_back(a);
     m_numActors++; 
+}
+
+void StudentWorld::damageActor(int x, int y)
+{
+    for (int i = 0; i < m_actors.size(); i++)
+    {
+        Actor* a = m_actors[i];
+        if (overlapEnemy(x, y))
+        {
+            cout << x << " " << y << endl;
+            a->getDamaged();
+        }
+    }
 }
 
 
@@ -160,6 +178,20 @@ bool StudentWorld::overlapPeach(int x, int y)
     return false;
 }
 
+bool StudentWorld::overlapEnemy(int x, int y)
+{
+    for(Actor* a:m_actors)
+    {
+        if(a->getX() < x + SPRITE_WIDTH  && x < a->getX() + SPRITE_WIDTH  && a->getY() < y + SPRITE_HEIGHT  && y < a->getY() + SPRITE_HEIGHT )
+        {
+            if (a->isDamageable() && a != m_peach)
+                return true;
+        }
+    }
+    return false;
+}
+
+
 void StudentWorld::changePeachHealth(int h)
 {
     m_peach->setHealth(h);
@@ -183,4 +215,14 @@ void StudentWorld::peachStar(bool s)
 bool StudentWorld::peachHasStar()
 {
     return m_peach->hasStar(); 
+}
+
+int StudentWorld::peachHeight()
+{
+    return m_peach->getY();
+}
+
+int StudentWorld::peachWidth()
+{
+    return m_peach->getX(); 
 }

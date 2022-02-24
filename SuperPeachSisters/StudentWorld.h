@@ -17,21 +17,28 @@ public:
     virtual int init();
     virtual int move();
     virtual void cleanUp();
-    void addActor(Actor* a); 
+    void addActor(Actor* a);
+    void damageActor(int x, int y);
+    // collisions
     bool overlapped(int x, int y, bool checkBonk);
     Peach* getPeach() const;
     bool overlapPeach(int x, int y);
+    bool overlapEnemy(int x, int y);
+    
     // peach powers and health
     void changePeachHealth(int h);
     void peachShoot(bool s);
     void peachJump(bool j);
     void peachStar(bool s);
-    // checking 
+    // checking
     bool peachHasStar();
+    int peachHeight();
+    int peachWidth(); 
     
 
 private:
     Peach* m_peach;
+    PeachFireball* m_fireball;
     std::vector<Actor*> m_actors;
     int m_numActors; 
 };

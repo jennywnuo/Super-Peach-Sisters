@@ -22,32 +22,38 @@ GraphObject
             Flowers
             Mushrooms
             Stars
+        PeachFireballs
+        PiranhaFireballs
+        Shells
         Goal
-
-*/
+        Goombas
+        Koopas
+        Piranhas
+ */
 
 class Actor: public GraphObject
 {
 public:
-    Actor(int imageID, int startX, int startY, int startDirection, int depth, double size, StudentWorld* sWorld, bool isAlive, bool isSolid);
+    Actor(int imageID, int startX, int startY, int startDirection, int depth, double size, StudentWorld* sWorld, bool isAlive, bool isSolid, bool isDamageable);
     virtual ~Actor();
     virtual void doSomething() = 0;
+    virtual void getDamaged(){}
     virtual void bonk(){}
     
     bool isAlive() const;
     bool isSolid() const;
+    bool isDamageable() const;
     void kill();
     
     
     StudentWorld* getWorld() const;
     virtual int getScore() const;
-    bool isDamageable();
     
 private:
     bool m_alive;
     bool m_solid;
+    bool m_damageable;
     StudentWorld* m_world;
-    int m_health;
 };
 
 // PEACH 🍑
@@ -192,6 +198,7 @@ public:
     Goomba(int imageID, int startX, int startY, StudentWorld* sWorld);
     virtual void doSomething();
     virtual void bonk();
+    virtual void getDamaged();
 };
 
 // KOOPA 🐢
@@ -201,6 +208,7 @@ public:
     Koopa(int imageID, int startX, int startY, StudentWorld* sWorld);
     virtual void doSomething();
     virtual void bonk();
+    virtual void getDamaged();
 };
 
 // PIRANHA 🌷
