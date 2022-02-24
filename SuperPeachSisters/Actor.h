@@ -32,7 +32,7 @@ public:
     Actor(int imageID, int startX, int startY, int startDirection, int depth, double size, StudentWorld* sWorld, bool isAlive, bool isSolid);
     virtual ~Actor();
     virtual void doSomething() = 0;
-    virtual void bonk();
+    virtual void bonk(){}
     
     bool isAlive() const;
     bool isSolid() const;
@@ -57,10 +57,13 @@ public:
     Peach(int imageID, int startX, int startY, StudentWorld* sWorld);
     virtual void doSomething();
     virtual void bonk();
+    // powers and health
     void setHealth(int h);
-    void setShoot(bool s); // to the rain
+    void setShoot(bool s);
     void setStar(bool s);
     void setJumps(bool j);
+    // checking
+    bool hasStar();
     
 private:
     int m_distance;

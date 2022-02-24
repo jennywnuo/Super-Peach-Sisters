@@ -43,10 +43,6 @@ int Actor::getScore() const
     return 0;
 }
 
-void Actor::bonk()
-{
-}
-
 // PEACH 🍑
 Peach::Peach(int imageId, int startX, int startY, StudentWorld* sWorld) : Actor(imageId, startX, startY, 0, 1, 0, sWorld, true, false)
 {
@@ -63,15 +59,13 @@ void Peach::doSomething()
     if (!isAlive())
         return;
     
-    int currX = getX();
-    int currY = getY();
     
     if(m_distance > 0)
     {
         if (!getWorld()->overlapped(getX(), getY() + 4, true))
         {
             moveTo(getX(), getY() + 4);
-            cout << m_distance << endl;
+            cerr << m_distance << endl;
             m_distance--;
         }
         else
@@ -79,8 +73,8 @@ void Peach::doSomething()
             m_distance = 0;
         }
     }
-    else if (!getWorld()->overlapped(currX, currY-1, true) && !getWorld()->overlapped(currX, currY-2, true) && !getWorld()->overlapped(currX, currY-3, true) && !getWorld()->overlapped(currX, currY-4, true))
-        moveTo(currX, currY - 4);
+    else if (!getWorld()->overlapped(getX(), getY()-1, true) && !getWorld()->overlapped(getX(), getY()-2, true) && !getWorld()->overlapped(getX(), getY()-3, true) && !getWorld()->overlapped(getX(), getY()-4, true))
+        moveTo(getX(), getY() - 4);
     
 
     if (m_recharge > 0)
@@ -92,20 +86,20 @@ void Peach::doSomething()
         if (ch == KEY_PRESS_LEFT && !getWorld()->overlapped(getX() - 4, getY(), true))
         {
             setDirection(180);
-            if (currX > SPRITE_WIDTH)
-                this->moveTo(currX-4, currY);
+            if (getX() > SPRITE_WIDTH)
+                this->moveTo(getX()-4, getY());
         }
         
         if (ch == KEY_PRESS_RIGHT && !getWorld()->overlapped(getX() + 4, getY(), true))
         {
             setDirection(0);
-            if (currX < VIEW_WIDTH - SPRITE_WIDTH * 2)
-                this->moveTo(currX+4, currY);
+            if (getX() < VIEW_WIDTH - SPRITE_WIDTH * 2)
+                this->moveTo(getX()+4, getY());
         }
         
         if (ch == KEY_PRESS_UP)
         {
-            if(getWorld()->overlapped(currX, currY - 2, false))
+            if(getWorld()->overlapped(getX(), getY() - 2, false))
             {
                 getWorld()->playSound(SOUND_PLAYER_JUMP);
                 if (!m_jumps)
@@ -154,6 +148,11 @@ void Peach::setJumps(bool j)
     m_jumps = j;
 }
 
+bool Peach::hasStar()
+{
+    return m_starpower;
+}
+
 // BLOCK 🧱
 Block::Block(int imageID, int startX, int startY, StudentWorld* sWorld, bool isSolid, bool hasGoodie) : Actor(imageID, startX, startY, 0, 1, 2, sWorld, isSolid, true)
 {
@@ -187,6 +186,7 @@ void Block::setGoodie(bool g)
 void Block::bringGoodie()
 {
 }
+
 // STAR BLOCK ⭐️🧱
 StarBlock::StarBlock(int imageID, int startX, int startY, StudentWorld* sWorld, bool hasGoodie) : Block(imageID, startX, startY, sWorld, true, true)
 {
@@ -235,7 +235,7 @@ void Goal::doSomething()
 }
 
 void Goal::bonk(){
-    cout << "bonk!" << endl;
+    cerr << "bonk!" << endl;
 }
 
 
@@ -249,11 +249,8 @@ void Goodie::doSomething()
     
     if (!isAlive())
         return;
-    
-    int currX = getX();
-    int currY = getY();
-    
-    if (getWorld()->overlapPeach(currX, currY))
+        
+    if (getWorld()->overlapPeach(getX(), getY()))
     {
         kill();
         changes();
@@ -331,40 +328,50 @@ PeachFireball::PeachFireball(int imageID, int startX, int startY, int dir, Stude
 
 void PeachFireball::doSomething()
 {
-    int currX = getX();
-    int currY= getY();
-    
-    if(getDirection() == 0)
-    {
-        moveTo(currX + 2, currY);
-    }
+
+    int dir = 2;
     if(getDirection() == 180)
-    {
-        moveTo(currX - 2, currY);
-    }
+        dir = -2;
     
-    if(!getWorld()->overlapped(currX, currY - 2, false))
-    {
-        moveTo(currX, currY - 2);
-        cout << "GWHGHSGHSGFGHGH " << endl;
-    }
+    moveTo(getX() + dir, getY());
     
+    if(!getWorld()->overlapped(getX(), getY(), false))
+    {
+        cerr << "bitch its not on the ground  " << endl;
+        moveTo(getX(), getY() - 2);
+    }
+    if(getWorld()->overlapped(getX() + dir, getY(), true))
+    {
+        cerr << "dying lmao";
+        kill();
+        return;
+    }
+        
 }
 
 void PeachFireball::bonk()
 {
-    
 }
 
-
 // SHELLS 🥥
-Shell::Shell(int imageID, int startX, int startY, int dir, StudentWorld* sWorld) : Actor(imageID, startX, startY, dir, 1, 0, sWorld, true, true)
+Shell::Shell(int imageID, int startX, int startY, int dir, StudentWorld* sWorld) : Actor(imageID, startX, startY, dir, 1, 0, sWorld, true, false)
 {
 }
 
 
 void Shell::doSomething()
 {
+    if (!isAlive())
+        return;
+
+    int dir = 2;
+    if(getDirection() == 180)
+        dir = -2;
+    
+    if (!getWorld()->overlapped(getX()+dir, getY(), true))
+        moveTo(getX()+dir, getY());
+    else
+        kill(); 
 }
 
 void Shell::bonk()
@@ -409,10 +416,39 @@ Koopa::Koopa(int imageID, int startX, int startY, StudentWorld* sWorld) : Actor(
 
 void Koopa::doSomething()
 {
+    if (!isAlive())
+        return;
+
+    int dir = 1;
+    if(getDirection() == 180)
+        dir = -1;
+    
+    if (!getWorld()->overlapped(getX() + dir, getY(), false))
+        moveTo(getX()+dir, getY());
+    
+    if (!getWorld()->overlapped(getX() + (dir * SPRITE_WIDTH), getY() - 2, false) || getWorld()->overlapped(getX() + dir, getY(), false)) // if nothing under or if bonking object
+        setDirection(dir == 1 ? 180 : 0);
 }
 
 void Koopa::bonk()
 {
+    int dir = getDirection();
+    
+    if (getWorld()->overlapPeach(getX(), getY()))
+    {
+        cerr << "bonk ";
+        if(getWorld()->peachHasStar())
+        {
+            cerr << "girlboss asf" << endl;
+            getWorld()->playSound(SOUND_PLAYER_KICK);
+            getWorld()->increaseScore(100);
+            getWorld()->addActor(new Shell(IID_SHELL, getX(), getY(), dir, getWorld()));
+            kill();
+            return;
+        }
+    }
+    else
+        return;
 }
 
 

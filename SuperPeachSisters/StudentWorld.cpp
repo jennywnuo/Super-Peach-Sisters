@@ -48,6 +48,7 @@ int StudentWorld::init()
                     case Level::empty:
                         break;
                     case Level::koopa:
+                        addActor(new Koopa(IID_KOOPA, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this));
                         break;
                     case Level::goomba:
                         addActor(new Goomba(IID_GOOMBA, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this));
@@ -74,6 +75,7 @@ int StudentWorld::init()
                         addActor(new Block(IID_PIPE, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this, true, false));
                         break;
                     case Level::piranha:
+                        addActor(new Piranha(IID_PIRANHA, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this));
                         break;
                     case Level::mario:
                         break;
@@ -87,20 +89,17 @@ int StudentWorld::init()
 
 int StudentWorld::move()
 {
-    m_peach->doSomething();
     vector<Actor*>::iterator it;
     it = m_actors.begin();
-    while (it != m_actors.end())
-    {
+    while(it != m_actors.end()) {
+        if((*it)->isAlive())
         (*it)->doSomething();
         it++;
+        
     }
-    
     m_peach->doSomething();
-    for (auto itr = m_actors.begin(); itr != m_actors.end(); itr++)
-    {
-        if (!(*itr)->isAlive())
-        {
+    for (auto itr = m_actors.begin(); itr != m_actors.end(); itr++) {
+        if (!(*itr)->isAlive()) {
             delete *itr;
             m_actors.erase(itr);
             itr = m_actors.begin();
@@ -157,10 +156,7 @@ bool StudentWorld::overlapped(int x, int y, bool checkBonk)
 bool StudentWorld::overlapPeach(int x, int y)
 {
     if (m_peach->getX()< x+SPRITE_WIDTH-1 && x < m_peach->getX() + SPRITE_WIDTH - 1 && m_peach->getY()<y+SPRITE_HEIGHT-1 && y < m_peach->getY()+SPRITE_HEIGHT-1)
-    {
-        cout <<"lkmfaooo" << endl;
         return true;
-    }
     return false;
 }
 
@@ -182,4 +178,9 @@ void StudentWorld::peachJump(bool j)
 void StudentWorld::peachStar(bool s)
 {
     m_peach->setStar(s);
+}
+
+bool StudentWorld::peachHasStar()
+{
+    return m_peach->hasStar(); 
 }
