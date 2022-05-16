@@ -15,63 +15,30 @@ Actor::Actor(int imageID, int startX, int startY, int startDirection, int depth,
     m_damageable = isDamageable;
 }
 
-Actor::~Actor()
-{
-}
-
-bool Actor::isAlive() const
-{
-    return m_alive;
-}
-
-bool Actor::isSolid() const
-{
-    return m_solid;
-}
-
-bool Actor::isDamageable() const
-{
-    return m_damageable;
-}
-
-void Actor::kill()
-{
-    m_alive = false;
-}
-
-StudentWorld* Actor::getWorld() const
-{
-    return m_world;
-}
-
-int Actor::getScore() const
-{
-    return 0;
-}
-
 // PEACH 🍑
 Peach::Peach(int imageId, int startX, int startY, StudentWorld* sWorld) : Actor(imageId, startX, startY, 0, 1, 0, sWorld, true, false, true)
 {
     m_distance = 0;
     m_shootpower = false;
-    m_starpower = false;
     m_jumps = false;
+    m_temp = false;
     m_recharge = 0;
+    m_health = 1;
+    m_starpower = 0;
+    m_finishLevel = false;
+    m_finishGame = false;
 }
-
 
 void Peach::doSomething()
 {
     if (!isAlive())
         return;
-    
-    
+        
     if(m_distance > 0)
     {
         if (!getWorld()->overlapped(getX(), getY() + 4, true))
         {
             moveTo(getX(), getY() + 4);
-            cerr << m_distance << endl;
             m_distance--;
         }
         else
@@ -81,11 +48,17 @@ void Peach::doSomething()
     }
     else if (!getWorld()->overlapped(getX(), getY()-1, true) && !getWorld()->overlapped(getX(), getY()-2, true) && !getWorld()->overlapped(getX(), getY()-3, true) && !getWorld()->overlapped(getX(), getY()-4, true))
         moveTo(getX(), getY() - 4);
-    
+
 
     if (m_recharge > 0)
         m_recharge--;
     
+    if (m_starpower > 0)
+        m_starpower--;
+    
+    if (m_temp > 0)
+        m_temp--;
+        
     int ch;
     if (getWorld()->getKey(ch))
     {
@@ -95,7 +68,7 @@ void Peach::doSomething()
             if (getX() > SPRITE_WIDTH)
                 this->moveTo(getX()-4, getY());
         }
-        
+
         if (ch == KEY_PRESS_RIGHT && !getWorld()->overlapped(getX() + 4, getY(), true))
         {
             setDirection(0);
@@ -130,37 +103,37 @@ void Peach::doSomething()
     }
 }
 
-void Peach::bonk()
+void Peach::getDamaged()
 {
-    if(m_starpower)
-    {
+    cerr << "HEALTH:" << m_health << endl;
+    if(m_health <= 0)
+        kill();
+    
+    
+    if (m_starpower > 0)
         return;
+
+    if(m_shootpower)
+    {
+        m_shootpower = false;
+        setTemp(true);
+        m_health += 2;
     }
-}
+    else
+        m_health--;
 
-void Peach::setHealth(int h)
-{
-    m_health = h;
-}
+    if(m_jumps)
+    {
+        m_jumps = false;
+        setTemp(true);
+        m_health += 2;
+    }
+    else
+        m_health--;
 
-void Peach::setShoot(bool s)
-{
-    m_shootpower = s;
-}
-
-void Peach::setStar(bool s)
-{
-    m_starpower = s;
-}
-
-void Peach::setJumps(bool j)
-{
-    m_jumps = j;
-}
-
-bool Peach::hasStar()
-{
-    return m_starpower;
+    if(m_health == 1)
+        getWorld()->playSound(SOUND_PLAYER_HURT);
+    
 }
 
 // BLOCK 🧱
@@ -170,68 +143,55 @@ Block::Block(int imageID, int startX, int startY, StudentWorld* sWorld, bool isS
 }
 
 
-void Block::doSomething()
-{
-}
-
 void Block::bonk()
 {
+    if (getWorld()->overlapPeach(getX(), getY() -  1) || getWorld()->overlapPeach(getX(), getY() -  2) || getWorld()->overlapPeach(getX(), getY() -  3))
+    {
+        if (!hasGoodie())
+        {
+            getWorld()->playSound(SOUND_PLAYER_BONK);
+            return;
+        }
+    }
+    
     if (hasGoodie())
     {
         bringGoodie();
+        getWorld()->playSound(SOUND_POWERUP_APPEARS);
     }
     setGoodie(false);
 }
 
-bool Block::hasGoodie()
-{
-    return m_goodie;
-}
-
-void Block::setGoodie(bool g)
-{
-    m_goodie = g;
-}
-
-void Block::bringGoodie()
-{
-}
 
 // STAR BLOCK ⭐️🧱
-StarBlock::StarBlock(int imageID, int startX, int startY, StudentWorld* sWorld, bool hasGoodie) : Block(imageID, startX, startY, sWorld, true, true)
-{
-}
+StarBlock::StarBlock(int imageID, int startX, int startY, StudentWorld* sWorld, bool hasGoodie) : Block(imageID, startX, startY, sWorld, true, true){}
 
 void StarBlock::bringGoodie()
 {
+    getWorld()->playSound(SOUND_POWERUP_APPEARS);
     getWorld()->addActor(new Star(IID_STAR, getX(), getY()+8, getWorld()));
 }
 
 // MUSHROOM BLOCK 🍄🧱
-MushroomBlock::MushroomBlock(int imageID, int startX, int startY,StudentWorld* sWorld, bool hasGoodie) : Block(imageID, startX, startY, sWorld, true, true)
-{
-}
+MushroomBlock::MushroomBlock(int imageID, int startX, int startY,StudentWorld* sWorld, bool hasGoodie) : Block(imageID, startX, startY, sWorld, true, true){}
 
 void MushroomBlock::bringGoodie()
 {
+    getWorld()->playSound(SOUND_POWERUP_APPEARS);
     getWorld()->addActor(new Mushroom(IID_MUSHROOM, getX(), getY()+8, getWorld()));
 }
 
-
 // FLOWER BLOCK 🌼🧱
-FlowerBlock::FlowerBlock(int imageID, int startX, int startY, StudentWorld* sWorld, bool hasGoodie) : Block(imageID, startX, startY, sWorld, true, true)
-{
-}
+FlowerBlock::FlowerBlock(int imageID, int startX, int startY, StudentWorld* sWorld, bool hasGoodie) : Block(imageID, startX, startY, sWorld, true, true){}
 
 void FlowerBlock::bringGoodie()
 {
+    getWorld()->playSound(SOUND_POWERUP_APPEARS);
     getWorld()->addActor(new Flower(IID_FLOWER, getX(), getY()+8, getWorld()));
 }
 
 // GOAL 🚩
-Goal::Goal(int imageID, int startX, int startY, StudentWorld*  sWorld): Actor(imageID, startX, startY, 0, 1, 1, sWorld, true, false, false){
-    
-}
+Goal::Goal(int imageID, int startX, int startY, StudentWorld*  sWorld): Actor(imageID, startX, startY, 0, 1, 1, sWorld, true, false, false){}
 
 void Goal::doSomething()
 {
@@ -241,17 +201,29 @@ void Goal::doSomething()
     {
         kill();
         getWorld()->increaseScore(1000);
+        getWorld()->finishLevel();
     }
 }
 
-void Goal::bonk(){
-    cerr << "lets fucking gooooo" << endl;
+
+// MARIO 👨🏻
+Mario::Mario(int imageID, int startX, int startY, StudentWorld*  sWorld): Goal(imageID, startX, startY, sWorld){}
+
+void Mario::doSomething()
+{
+    if (!isAlive())
+        return;
+    if (getWorld()->overlapPeach(getX(), getY()))
+    {
+        kill();
+        getWorld()->increaseScore(1000);
+        getWorld()->finishGame();
+    }
 }
 
+
 // GOODIES 😛
-Goodie::Goodie(int imageID, int startX, int startY, int startDirection, int depth, double size, StudentWorld* sWorld, bool isSolid) : Actor(imageID, startX, startY, 0, 1, 1, sWorld, true, false, false)
-{
-}
+Goodie::Goodie(int imageID, int startX, int startY, int startDirection, int depth, double size, StudentWorld* sWorld, bool isSolid) : Actor(imageID, startX, startY, 0, 1, 1, sWorld, true, false, false){}
 
 void Goodie::doSomething()
 {
@@ -292,9 +264,7 @@ void Flower::changes(){
 }
 
 // MUSHROOMS 🍄
-Mushroom::Mushroom(int imageID, int startX, int startY, StudentWorld* sWorld) : Goodie(IID_MUSHROOM, startX, startY, 0, 1, 1, sWorld, false)
-{
-}
+Mushroom::Mushroom(int imageID, int startX, int startY, StudentWorld* sWorld) : Goodie(IID_MUSHROOM, startX, startY, 0, 1, 1, sWorld, false){}
 
 void Mushroom::changes(){
     getWorld()->increaseScore(75);
@@ -304,35 +274,45 @@ void Mushroom::changes(){
 }
 
 // STARS ⭐️
-Star::Star(int imageID, int startX, int startY, StudentWorld* sWorld) : Goodie(IID_STAR, startX, startY, 0, 1, 1, sWorld, false)
-{
-}
+Star::Star(int imageID, int startX, int startY, StudentWorld* sWorld) : Goodie(IID_STAR, startX, startY, 0, 1, 1, sWorld, false){}
 
 void Star::changes(){
     getWorld()->increaseScore(100);
-    getWorld()->peachStar(true); 
+    getWorld()->peachStar(true);
     getWorld()->playSound(SOUND_PLAYER_POWERUP);
 }
 
 
 // PIRANHA FIREBALLS ☄️
-PiranhaFireball::PiranhaFireball(int imageID, int startX, int startY, int dir, StudentWorld* sWorld) : Actor(imageID, startX, startY, dir, 1, 1, sWorld, true, true, false)
-{
-}
+PiranhaFireball::PiranhaFireball(int imageID, int startX, int startY, int dir, StudentWorld* sWorld) : Actor(imageID, startX, startY, dir, 1, 1, sWorld, true, false, false){}
 
 void PiranhaFireball::doSomething()
 {
+    int dir = 2;
+    if(getDirection() == 180)
+        dir = -2;
+
+    if(!getWorld()->overlapped(getX(), getY() - 2, false))
+    {
+        moveTo(getX(), getY() - 2);
+    }
+
+    if(!getWorld()->overlapped(getX() + dir, getY(), true))
+        moveTo(getX() + dir, getY());
+    else
+    {
+        kill();
+        return;
+    }
+    if (getWorld()->overlapPeach(getX(), getY()))
+    {
+        getWorld()->peachDamage();
+    }
 }
 
-void PiranhaFireball::bonk()
-{
-    
-}
 
 // PEACH FIREBALLS 🔥
-PeachFireball::PeachFireball(int imageID, int startX, int startY, int dir, StudentWorld* sWorld) : Actor(imageID, startX, startY, dir, 1, 1, sWorld, true, false, false)
-{
-}
+PeachFireball::PeachFireball(int imageID, int startX, int startY, int dir, StudentWorld* sWorld) : Actor(imageID, startX, startY, dir, 1, 1, sWorld, true, false, false){}
 
 void PeachFireball::doSomething()
 {
@@ -353,24 +333,14 @@ void PeachFireball::doSomething()
         return;
     }
     
-    if(getWorld()->overlapEnemy(getX(), getY()))
-    {
-//        getWorld()->damageActor(getX(), getY());
+    if (getWorld()->damageActor(getX(), getY())) {
         kill();
-        return;
     }
-
 }
 
-void PeachFireball::bonk()
-{
-}
 
 // SHELLS 🥥
-Shell::Shell(int imageID, int startX, int startY, int dir, StudentWorld* sWorld) : Actor(imageID, startX, startY, dir, 1, 0, sWorld, true, false, false)
-{
-}
-
+Shell::Shell(int imageID, int startX, int startY, int dir, StudentWorld* sWorld) : Actor(imageID, startX, startY, dir, 1, 0, sWorld, true, false, false){}
 
 void Shell::doSomething()
 {
@@ -391,19 +361,16 @@ void Shell::doSomething()
         kill();
         return;
     }
-
-}
-
-void Shell::bonk()
-{
-    
+    if (getWorld()->damageActor(getX(), getY()))
+    {
+        kill();
+        return;
+    }
 }
 
 
 // GOOMBA 💩
-Goomba::Goomba(int imageID, int startX, int startY, StudentWorld* sWorld) : Actor(imageID, startX, startY, (randInt(0, 1) * 180), 0, 1, sWorld, true, false, true)
-{
-}
+Goomba::Goomba(int imageID, int startX, int startY, StudentWorld* sWorld) : Actor(imageID, startX, startY, (randInt(0, 1) * 180), 0, 1, sWorld, true, false, true){}
 
 
 void Goomba::doSomething()
@@ -416,9 +383,10 @@ void Goomba::doSomething()
     if(getDirection() == 180)
         dir = -1;
     
-    if (!getWorld()->overlapped(getX()+dir, getY(), true))
+    if (!getWorld()->overlapped(getX() + dir, getY(), false))
         moveTo(getX()+dir, getY());
-    else
+    
+    if (!getWorld()->overlapped(getX() + (dir * SPRITE_WIDTH), getY() - 2, false) || getWorld()->overlapped(getX() + dir, getY(), false)) // if nothing under or if bonking object
         setDirection(dir == 1 ? 180 : 0);
 }
 
@@ -429,9 +397,13 @@ void Goomba::bonk()
         if(getWorld()->peachHasStar())
         {
             getWorld()->playSound(SOUND_PLAYER_KICK);
-            cerr << "girlboss asf" << endl;
             getDamaged();
         }
+        if(getWorld()->peachHasJump() || getWorld()->peachHasFire())
+        {
+            getWorld()->peachTemp(true);
+        }
+        getWorld()->damagePeach();
     }
     else
         return;
@@ -446,9 +418,7 @@ void Goomba::getDamaged()
 }
 
 // KOOPA 🐢
-Koopa::Koopa(int imageID, int startX, int startY, StudentWorld* sWorld) : Actor(imageID, startX, startY, (randInt(0, 1) * 180), 0, 1, sWorld, true, false, true)
-{
-}
+Koopa::Koopa(int imageID, int startX, int startY, StudentWorld* sWorld) : Actor(imageID, startX, startY, (randInt(0, 1) * 180), 0, 1, sWorld, true, false, true){}
 
 void Koopa::doSomething()
 {
@@ -474,9 +444,13 @@ void Koopa::bonk()
         if(getWorld()->peachHasStar())
         {
             getWorld()->playSound(SOUND_PLAYER_KICK);
-            cerr << "girlboss asf" << endl;
             getDamaged();
         }
+        if(getWorld()->peachHasJump() || getWorld()->peachHasFire())
+        {
+            getWorld()->peachTemp(true);
+        }
+        getWorld()->peachDamage();
     }
     else
         return;
@@ -484,16 +458,21 @@ void Koopa::bonk()
 
 void Koopa::getDamaged()
 {
-    int dir = getDirection();
     getWorld()->increaseScore(100);
-    getWorld()->addActor(new Shell(IID_SHELL, getX(), getY(), dir, getWorld()));
     this->kill();
     return;
+}
+
+Koopa::~Koopa()
+{
+    int dir = getDirection();
+    getWorld()->addActor(new Shell(IID_SHELL, getX(), getY(), dir, getWorld()));
 }
 
 // PIRANHA 🌷
 Piranha::Piranha(int imageID, int startX, int startY, StudentWorld* sWorld) : Actor(imageID, startX, startY, (randInt(0, 1) * 180), 0, 1, sWorld, true, false, true)
 {
+    m_delay = 0;
 }
 
 
@@ -508,16 +487,67 @@ void Piranha::doSomething()
         bonk(); // BONK PEACH
         return;
     }
+    
     if (getWorld()->peachHeight() <= this->getY() + (1.5 * SPRITE_HEIGHT) && getWorld()->peachHeight() >= this->getY() - (1.5 * SPRITE_HEIGHT))
     {
-        if(getWorld()->peachWidth() < this->getX())
-            this->setDirection(0); 
+        if(getWorld()->peachWidth() < this->getX()) // left
+        {
+            this->setDirection(180);
+            if (getWorld()->peachWidth() >= this->getX() - (8 * SPRITE_WIDTH))
+            {
+                if (m_delay == 0)
+                {
+                    getWorld()->playSound(SOUND_PIRANHA_FIRE);
+                    getWorld()->addActor(new PiranhaFireball(IID_PIRANHA_FIRE, getX(), getY(), 180, getWorld()));
+                    m_delay = 40;
+                }
+                else
+                    m_delay--;
+            }
+        }
+        if(getWorld()->peachWidth() > this->getX()) // right
+        {
+            this->setDirection(0);
+            if (getWorld()->peachWidth() <= this->getX() + (8 * SPRITE_WIDTH))
+            {
+                if (m_delay == 0)
+                {
+                    getWorld()->playSound(SOUND_PIRANHA_FIRE);
+                    getWorld()->addActor(new PiranhaFireball(IID_PIRANHA_FIRE, getX(), getY(), 0, getWorld()));
+                    m_delay = 40;
+                }
+                else
+                    m_delay--;
+            }
+        }
         
     }
+    else
+        return;
 }
 
 
 void Piranha::bonk()
 {
-    
+    if (getWorld()->overlapPeach(getX(), getY()))
+    {
+        if(getWorld()->peachHasStar())
+        {
+            getWorld()->playSound(SOUND_PLAYER_KICK);
+            getDamaged();
+        }
+        if(getWorld()->peachHasJump() || getWorld()->peachHasFire())
+        {
+            getWorld()->peachTemp(true);
+        }
+    }
+    else
+        return;
+}
+
+void Piranha::getDamaged()
+{
+    getWorld()->increaseScore(100);
+    this->kill();
+    return;
 }

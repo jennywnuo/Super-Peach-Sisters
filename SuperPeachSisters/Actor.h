@@ -14,7 +14,6 @@ GraphObject
     Actor
         Peach
         Block
-            Pipes
             FlowerBlock
             MushroomBlock
             StarBlock
@@ -26,6 +25,7 @@ GraphObject
         PiranhaFireballs
         Shells
         Goal
+            Mario
         Goombas
         Koopas
         Piranhas
@@ -35,19 +35,19 @@ class Actor: public GraphObject
 {
 public:
     Actor(int imageID, int startX, int startY, int startDirection, int depth, double size, StudentWorld* sWorld, bool isAlive, bool isSolid, bool isDamageable);
-    virtual ~Actor();
+    virtual ~Actor(){}
     virtual void doSomething() = 0;
     virtual void getDamaged(){}
     virtual void bonk(){}
     
-    bool isAlive() const;
-    bool isSolid() const;
-    bool isDamageable() const;
-    void kill();
+    bool isAlive() const{return m_alive;}
+    bool isSolid() const{return m_solid;}
+    bool isDamageable() const{return m_damageable;}
+    void kill(){m_alive = false;}
     
     
-    StudentWorld* getWorld() const;
-    virtual int getScore() const;
+    StudentWorld* getWorld() const{return m_world;}
+    virtual int getScore() const{return 0;}
     
 private:
     bool m_alive;
@@ -62,23 +62,34 @@ class Peach: public Actor
 public:
     Peach(int imageID, int startX, int startY, StudentWorld* sWorld);
     virtual void doSomething();
-    virtual void bonk();
     // powers and health
-    void setHealth(int h);
-    void setShoot(bool s);
-    void setStar(bool s);
-    void setJumps(bool j);
+    void setHealth(int h){m_health = h;}
+    int getHealth(){return m_health;}
+    void setShoot(bool s){m_shootpower = s;}
+    void setStar(bool s){m_starpower = 150;}
+    void setTemp(bool t){m_temp = 8;}
+    void setJumps(bool j){m_jumps = j;}
     // checking
-    bool hasStar();
+    bool hasStar(){return m_starpower > 0;}
+    bool hasJump(){return m_jumps;}
+    bool hasFire(){return m_shootpower;}
+        virtual void getDamaged();
+    // level 
+    void finishLevel(){m_finishLevel = true;}
+    void finishGame(){m_finishGame = true;}
+    bool completed(){return m_finishLevel;}
+    bool completedGame(){return m_finishGame;}
     
 private:
     int m_distance;
-    bool m_starpower;
     bool m_shootpower;
     bool m_jumps;
     int m_health;
     int m_recharge;
-    
+    int m_starpower;
+    int m_temp;
+    bool m_finishLevel;
+    bool m_finishGame;
 };
 
 // BLOCK 🧱
@@ -86,11 +97,11 @@ class Block: public Actor
 {
 public:
     Block(int imageID, int startX, int startY, StudentWorld* sWorld, bool isSolid, bool hasGoodie);
-    virtual void doSomething();
+    virtual void doSomething(){}
     virtual void bonk();
-    bool hasGoodie();
-    void setGoodie(bool g);
-    virtual void bringGoodie();
+    bool hasGoodie(){return m_goodie;}
+    void setGoodie(bool g){m_goodie = g;}
+    virtual void bringGoodie(){}
 
 private:
     bool m_goodie;
@@ -127,9 +138,15 @@ class Goal: public Actor
 public:
     Goal(int imageID, int startX, int startY, StudentWorld* sWorld);
     virtual void doSomething();
-    virtual void bonk();
 };
 
+// MARIO 👨🏻
+class Mario: public Goal
+{
+public:
+    Mario(int imageID, int startX, int startY, StudentWorld* sWorld);
+    virtual void doSomething();
+};
 
 // GOODIES 😛
 class Goodie: public Actor
@@ -140,7 +157,7 @@ public:
     virtual void changes() = 0;
 };
 
-// FLOWERS 🌼
+// FLOWER 🌼
 class Flower: public Goodie
 {
 public:
@@ -148,7 +165,7 @@ public:
     virtual void changes();
 };
 
-// MUSHROOMS 🍄
+// MUSHROOM 🍄
 class Mushroom: public Goodie
 {
 public:
@@ -156,7 +173,7 @@ public:
     virtual void changes();
 };
 
-// STARS ⭐️
+// STAR ⭐️
 class Star: public Goodie
 {
 public:
@@ -170,7 +187,6 @@ class PiranhaFireball: public Actor
 public:
     PiranhaFireball(int imageID, int startX, int startY, int dir, StudentWorld* sWorld);
     virtual void doSomething();
-    virtual void bonk();
 };
 
 // PEACH FIREBALLS 🔥
@@ -179,7 +195,6 @@ class PeachFireball: public Actor
 public:
     PeachFireball(int imageID, int startX, int startY, int dir, StudentWorld* sWorld);
     virtual void doSomething(); 
-    virtual void bonk();
 };
 
 // SHELLS 🥥
@@ -188,7 +203,6 @@ class Shell: public Actor
 public:
     Shell(int imageID, int startX, int startY, int dir, StudentWorld* sWorld);
     virtual void doSomething();
-    virtual void bonk();
 };
 
 // GOOMBA 💩
@@ -209,6 +223,7 @@ public:
     virtual void doSomething();
     virtual void bonk();
     virtual void getDamaged();
+    virtual ~Koopa();
 };
 
 // PIRANHA 🌷
@@ -218,6 +233,9 @@ public:
     Piranha(int imageID, int startX, int startY, StudentWorld* sWorld);
     virtual void doSomething();
     virtual void bonk();
+    virtual void getDamaged();
+private:
+    int m_delay; 
 };
 
 

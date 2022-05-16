@@ -9,7 +9,7 @@ using namespace std;
 
 GameWorld* createStudentWorld(string assetPath)
 {
-	return new StudentWorld(assetPath);
+    return new StudentWorld(assetPath);
 }
 
 // Students:  Add code to this file, StudentWorld.h, Actor.h, and Actor.cpp
@@ -28,7 +28,18 @@ StudentWorld::~StudentWorld()
 int StudentWorld::init()
 {
     Level lev(assetPath());
-    string level_file = "level01.txt";
+    
+    string level_file;
+    cerr << "LEVEL:" << " " << getLevel() << " ";
+    
+    if(getLevel() == 1)
+        level_file = "level01.txt";
+    else if(getLevel() == 2)
+        level_file = "level02.txt";
+    else if(getLevel() == 3)
+        level_file = "level03.txt";
+    
+    
     Level::LoadResult result = lev.loadLevel(level_file);
     if (result == Level::load_fail_file_not_found)
         return GWSTATUS_LEVEL_ERROR;
@@ -78,6 +89,7 @@ int StudentWorld::init()
                         addActor(new Piranha(IID_PIRANHA, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this));
                         break;
                     case Level::mario:
+                        addActor(new Mario(IID_MARIO, i * SPRITE_WIDTH, j * SPRITE_HEIGHT, this));
                         break;
                 }
             }
@@ -97,7 +109,27 @@ int StudentWorld::move()
         it++;
         
     }
-    m_peach->doSomething();
+    if(m_peach->isAlive())
+        m_peach->doSomething();
+    else
+    {
+        decLives();
+        playSound(SOUND_PLAYER_DIE);
+        return GWSTATUS_PLAYER_DIED;
+    }
+    
+    if (m_peach->completed())
+    {
+        playSound(SOUND_FINISHED_LEVEL);
+        return GWSTATUS_FINISHED_LEVEL;
+    }
+    
+    if(m_peach->completedGame())
+    {
+        playSound(SOUND_GAME_OVER);
+        return GWSTATUS_PLAYER_WON;
+    }
+    
     for (auto itr = m_actors.begin(); itr != m_actors.end(); itr++) {
         if (!(*itr)->isAlive()) {
             delete *itr;
@@ -112,6 +144,12 @@ int StudentWorld::move()
     oss << "Lives: " << getLives() << "  ";
     oss << "Score: " << getScore() << "  ";
     oss << "Level: " << getLevel() << "  ";
+    if (peachHasJump())
+        oss << "JumpPower! ";
+    if (peachHasFire())
+        oss << "ShootPower! ";
+    if (peachHasStar())
+        oss << "StarPower! ";
     
     setGameStatText(oss.str());
     return GWSTATUS_CONTINUE_GAME;
@@ -139,22 +177,27 @@ Peach* StudentWorld::getPeach() const
 void StudentWorld::addActor(Actor* a)
 {
     m_actors.push_back(a);
-    m_numActors++; 
+    m_numActors++;
 }
 
-void StudentWorld::damageActor(int x, int y)
+bool StudentWorld::damageActor(int x, int y)
 {
     for (int i = 0; i < m_actors.size(); i++)
     {
         Actor* a = m_actors[i];
-        if (overlapEnemy(x, y))
+        if (overlapEnemy(x, y, a))
         {
-            cout << x << " " << y << endl;
             a->getDamaged();
+            return true;
         }
     }
+    return false;
 }
 
+void StudentWorld::damagePeach()
+{
+    m_peach->getDamaged();
+}
 
 bool StudentWorld::overlapped(int x, int y, bool checkBonk)
 {
@@ -178,51 +221,13 @@ bool StudentWorld::overlapPeach(int x, int y)
     return false;
 }
 
-bool StudentWorld::overlapEnemy(int x, int y)
+bool StudentWorld::overlapEnemy(int x, int y, Actor* a)
 {
-    for(Actor* a:m_actors)
+    if(a->getX() < x + SPRITE_WIDTH  && x < a->getX() + SPRITE_WIDTH  && a->getY() < y + SPRITE_HEIGHT  && y < a->getY() + SPRITE_HEIGHT )
     {
-        if(a->getX() < x + SPRITE_WIDTH  && x < a->getX() + SPRITE_WIDTH  && a->getY() < y + SPRITE_HEIGHT  && y < a->getY() + SPRITE_HEIGHT )
-        {
-            if (a->isDamageable() && a != m_peach)
-                return true;
-        }
+        if (a->isDamageable() && a != m_peach)
+            return true;
     }
     return false;
 }
 
-
-void StudentWorld::changePeachHealth(int h)
-{
-    m_peach->setHealth(h);
-}
-
-void StudentWorld::peachShoot(bool s)
-{
-    m_peach->setShoot(s);
-}
-
-void StudentWorld::peachJump(bool j)
-{
-    m_peach->setJumps(j);
-}
-
-void StudentWorld::peachStar(bool s)
-{
-    m_peach->setStar(s);
-}
-
-bool StudentWorld::peachHasStar()
-{
-    return m_peach->hasStar(); 
-}
-
-int StudentWorld::peachHeight()
-{
-    return m_peach->getY();
-}
-
-int StudentWorld::peachWidth()
-{
-    return m_peach->getX(); 
-}
